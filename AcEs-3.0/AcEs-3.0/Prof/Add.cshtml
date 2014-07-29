@@ -1,0 +1,241 @@
+﻿@{
+
+    var db = Database.Open("SQLServerConnectionString");
+    var selectQueryString = "SELECT * FROM [User] WHERE ID =";
+    var GetIDQuery = "SELECT * FROM Course WHERE CourseCode = @0 AND Section = @1 AND ProfID = @2";
+    var username ="";
+    var name = "";
+    var fileName = "";
+    Array userData = null;
+    char[] delimiterChar = { ',' };
+    char[] semicoloon = { ';' };
+    var coursecode = "";
+    var coursesection = "";
+    var days = "";
+    var prereqs= "";
+    var from = "";
+    var to = "";
+    var room = "";
+    var mon = "";
+    var success = false;
+    if(Session["username"] == null)
+    {
+        Response.Redirect("default.cshtml");
+    }
+    else {
+        username = (string)Session["username"];
+        selectQueryString += username;
+        foreach (var row in db.Query(selectQueryString))
+        {
+            name = (row.LastName + ", " + row.FirstName + " " + row.MiddleName);
+            if(row.Role == 2)
+            {
+                Response.Redirect("~/");
+            }
+        }
+    }
+    if (IsPost)
+    {
+        coursecode = Request["CourseCode"];
+        coursesection = Request["Section"];
+        from = Request["from"];
+        to = Request["to"];
+        room = Request["room"];
+        mon = Request.Form["mon"];
+        var tue = Request.Form["tue"];
+        var wed = Request.Form["wed"];
+        var thu = Request.Form["thu"];
+        var fri = Request.Form["fri"];
+        var sat = Request.Form["sat"];
+        if(mon == "on")
+        {
+            days += "M";
+            
+        }
+        if (tue == "on")
+        {
+            days += "T";
+        }
+        if (wed == "on")
+        {
+            days += "W";
+
+        }
+        if (thu == "on")
+        {
+            days += "H";
+
+        }
+        if (fri == "on")
+        {
+            days += "F";
+
+        }
+        if (sat == "on")
+        {
+            days += "S";
+
+        }
+        prereqs = Request["prereqs"];
+        var processprereq = prereqs.Split(semicoloon);
+        var InsertQuery = "INSERT INTO Course (CourseCode, Section, Days, TimeFrom, TimeTo, ProfID, Active, Room) " +
+                "VALUES (@0, @1, @2, @3, @4, @5, @6, @7)";
+        db.Execute(InsertQuery, coursecode, coursesection, days, from, to, username, 1, room);
+        var fileSavePath = "";
+        var file = Request.Files["uploadfile"];
+        fileName = Path.GetFileName(file.FileName);
+        fileSavePath = Server.MapPath("~/ClassList/" +
+          fileName);
+        file.SaveAs(fileSavePath);
+        userData = File.ReadAllLines(fileSavePath);
+        var courseDetails = db.QuerySingle(GetIDQuery, coursecode, coursesection, username);
+        var StudentRelationQuery = "INSERT INTO Course_Student (StudentID, CourseID) " + "VALUES (@0, @1)";
+        var coursePrereqs = "INSERT INTO Prereq (CourseID, Prereq)" + "VALUES(@0, @1)";
+        foreach (string dataLine in userData)
+        {
+            var courseinfo = dataLine.Split(delimiterChar);
+            if(courseinfo[0].Contains("'"))
+            {
+                db.Execute(StudentRelationQuery, courseinfo[0].Substring(courseinfo[0].IndexOf("'")+1), courseDetails.CourseID);
+            }
+                    
+        }
+        for (int i = 0; i < processprereq.Length; i++ )
+        {
+            db.Execute(coursePrereqs, courseDetails.CourseID, processprereq[i]);
+        }
+        File.Delete(fileSavePath);
+        success = true;
+
+    }
+
+}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Add a Class</title>
+
+    <!-- Bootstrap -->
+    <link href="../css/custombootstrap.css" rel="stylesheet">
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="../js/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="engine1/style.css" />
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="../js/bootstrap.js"></script>
+</head>
+<body>
+    <div class="navbar navbar-inverse">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">AcEs</a>
+
+            </div>
+            <ul class="nav navbar-nav">
+                <li><a href="~/PROF/Manage">Home</a></li>
+                <li class="active"><a href="#">Add Classes</a></li>
+            </ul>
+            <p class="navbar-text navbar-right">Hi @name! <a href="~/logout" class="navbar-link"><span class="glyphicon glyphicon-log-out"></span></a></p>
+        </div>
+    </div>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3 well">
+                @if(IsPost && success)
+                {
+                    <div class="alert alert-success alert-dismissable">
+                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                        <strong>Add Class Success!</strong> <a href="~/Prof/Manage">Click here to manage your classes</a>.
+                    </div>
+                }
+                <h2>Add a class</h2>
+                <form method="Post" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="CourseCode">Course Code</label>
+                        <input type="text" class="form-control" id="CourseCode" name="CourseCode" placeholder="Enter Course Code" required>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-md-6">
+                            <label for="Room">Room</label>
+                            <input type="text" class="form-control" id="Room" name="Room" placeholder="G***" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="Section">Section</label>
+                            <input type="text" class="form-control" id="Section" name="Section" placeholder="S**" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ClassList">Upload Class List</label>
+                        <input type="file" id="ClassList" name="uploadfile" required>
+                        <p class="help-block"><b>NOTE: Only Comma Separated Values (.csv) files are accepted!</b></p>
+                        <hr>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="day-option" class="control-label">Days</label>
+                        <div class="controls row" id="day-option">
+                            <div class="col-md-2">
+                                <label class="checkbox inline" for="M">
+                                    <input type="checkbox" id="M" name="mon">Monday
+                                </label>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="checkbox inline" for="T">
+                                    <input type="checkbox" id="T" name="tue">Tuesday
+                                </label>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="checkbox inline" for="W">
+                                    <input type="checkbox" id="W" name="wed">Wednesday
+                                </label>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="checkbox inline" for="H">
+                                    <input type="checkbox" id="H" name="thu">Thursday
+                                </label>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="checkbox inline" for="F">
+                                    <input type="checkbox" id="F" name="fri">Friday
+                                </label>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="checkbox inline" for="S">
+                                    <input type="checkbox" id="S" name="sat">Saturday
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                        <label class="control-label">Class Time</label>
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="col-md-6">
+                                    <input type="time" class="form-control required" id="From" name="from">
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="time" class="form-control required" id="To" placeholder="To" name="to">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <hr>
+                            <label for="Prereqs" class="control-label">Pre-requisites</label>
+                            <textarea class="form-control" id="Prereqs" rows="3" placeholder="CourseCodes" name="prereqs"></textarea>
+                            <p class="help-block">Separate by semi-colon (;)</p>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Add this class</button>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</body>
+</html>

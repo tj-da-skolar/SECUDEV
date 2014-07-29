@@ -1,0 +1,224 @@
+﻿@{
+
+    var db = Database.Open("SQLServerConnectionString");
+    var selectQueryString = "SELECT * FROM [User] WHERE ID = @0";
+    var GetProfileQuery = "SELECT * FROM User_Info WHERE StudentID = @0";
+    var LearningQuery = "SELECT * FROM Student_Learning WHERE StudentID = @0";
+    var getGrades = "SELECT * FROM Grades WHERE StudentID = @0";
+    var username = "";
+    var name = "";
+    var email = "";
+    var College = "";
+    var Course = "";
+    var MobileNumber = "";
+    decimal CGPA = 0;
+    var HighSchool = "";
+    var MyAddress = "";
+    var Nickname = "";
+    var Picture = "";
+    var LearningStyle = "";
+    if (Session["username"] == null)
+    {
+        Response.Redirect("default.cshtml");
+    }
+    else
+    {
+        username = (string)Session["username"];
+        var row = db.QuerySingle(selectQueryString, username);
+        name = (row.LastName + ", " + row.FirstName + " " + row.MiddleName);
+        email = row.Email;
+        var details = db.QuerySingle(GetProfileQuery, username);
+        if(details == null)
+        {
+            Response.Redirect("~/Student/AddInfo");
+        }
+        else
+        { 
+        College = details.College;
+        Course = details.Course;
+        MobileNumber = details.MobileNumber;
+        CGPA = details.CGPA;
+        HighSchool = details.HighSchool;
+        MyAddress = details.Address;
+        Nickname = details.Nickname;
+        Picture = details.Picture;
+        if(Picture == null)
+        {
+            Picture = "user_icon.png";
+        }
+        var learning = db.QuerySingle(LearningQuery, username);
+        if(learning.Visual == 1)
+        {
+            LearningStyle += "Visual";
+        }
+        if(learning.Aural == 1)
+        {
+            if(LearningStyle != "")
+            {
+                LearningStyle += ", ";
+            }
+            LearningStyle += "Aural";
+        }
+        if(learning.Verbal == 1)
+        {
+            if (LearningStyle != "")
+            {
+                LearningStyle += ", ";
+            }
+            LearningStyle += "Verbal";
+        }
+        if(learning.Physical == 1)
+        {
+            if (LearningStyle != "")
+            {
+                LearningStyle += ", ";
+            }
+            LearningStyle += "Physical";
+        }
+        if(learning.Logical == 1)
+        {
+            if (LearningStyle != "")
+            {
+                LearningStyle += ", ";
+            }
+            LearningStyle += "Logical";
+        }
+        if(learning.Social == 1)
+        {
+            if (LearningStyle != "")
+            {
+                LearningStyle += ", ";
+            }
+            LearningStyle += "Social";
+        }
+        if(learning.Solitary == 1)
+        {
+            if (LearningStyle != "")
+            {
+                LearningStyle += ", ";
+            }
+            LearningStyle += "Solitary";
+        }
+        
+        if (row.Role == 1)
+        {
+            Response.Redirect("../");
+        }
+        }
+    }
+
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Student Main Page</title>
+
+    <!-- Bootstrap -->
+    <link href="~/css/custombootstrap.css" rel="stylesheet">
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="~/js/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="~/js/bootstrap.js"></script>
+</head>
+<body>
+    <div class="navbar navbar-inverse">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">AcEs</a>
+            </div>
+            <div class="navbar-inverse" role="navigation">
+                <ul class="nav navbar-nav">
+                    <li class="active"><a href="#">Home</a></li>
+                    <li class=dropdown>
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Edit Profile <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="~/Student/Edit/Info">Basic Information</a></li>
+                            <li><a href="~/Student/Edit/Password">Change Password</a></li>
+                            <li><a href="~/Student/Edit/Learning">Learning Style</a></li>
+                            <li><a href="~/Student/Edit/Grades">Grades</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <p class="navbar-text navbar-right">Hi @name! <a href="~/logout" class="navbar-link"><span class="glyphicon glyphicon-log-out"></span></a></p>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+                <div class="well">
+                    <div class="row">
+                        <div class="col-md-6 col-md-offset-1"><strong><h2>@name<br>@username<br />@Nickname</h2></strong><br></div>
+                        <div class="col-md-2 col-md-offset-2"><img border="0" src="~/Picture/@Picture" alt="userpicture" width="200" height="200"></div>
+                    </div>
+
+                    <div class="row">
+                        <div class=" col-md-3 col-md-offset-1"><label>College: </label></div>
+                        <div class="col-m-6 col-md-offset-1">@College<br></div>
+                    </div>
+                    <div class="row">
+                        <div class=" col-md-3 col-md-offset-1"><label>Course: </label></div>
+                        <div class="col-m-6 col-md-offset-1"> @Course<br></div>
+                    </div>
+                    <div class="row">
+                        <div class=" col-md-3 col-md-offset-1"><label>Mobile Number: </label></div>
+                        <div class="col-m-6 col-md-offset-1"> @MobileNumber<br></div>
+                    </div>
+                    <div class="row">
+                        <div class=" col-md-3 col-md-offset-1"><label>Email Address: </label></div>
+                        <div class="col-m-6 col-md-offset-1"> @email<br></div>
+                    </div>
+                    <div class="row">
+                        <div class=" col-md-3 col-md-offset-1"><label>High School </label></div>
+                        <div class="col-m-6 col-md-offset-1"> @HighSchool<br></div>
+                    </div>
+                    <div class="row">
+                        <div class=" col-md-3 col-md-offset-1"><label>CGPA: </label></div>
+                        <div class="col-m-6 col-md-offset-1">@CGPA<br></div>
+                    </div>
+                    <div class="row">
+                        <div class=" col-md-3 col-md-offset-1"><label>Learning Style: </label></div>
+                        <div class="col-m-6 col-md-offset-1">@LearningStyle<br></div>
+                    </div>
+
+                    <hr />
+
+                    <h2>Grades</h2><br>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Course Code</th>
+                                <th>A.Y.</th>
+                                <th>Term</th>
+                                <th>Grade</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in db.Query(getGrades, username))
+                            {
+                                    <tr>
+                                        <td>@row.CourseCode</td>
+                                        <td>@row.Year</td>
+                                        <td>@row.Term</td>
+                                        <td>@row.Grade</td>
+                                    </tr>
+                            }
+                        </tbody>
+                    </table>
+
+
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

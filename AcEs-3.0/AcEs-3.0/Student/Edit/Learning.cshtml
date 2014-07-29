@@ -1,0 +1,189 @@
+﻿@{
+
+    var db = Database.Open("SQLServerConnectionString");
+    var selectQueryString = "SELECT * FROM [User] WHERE ID = @0";
+    var GetProfileQuery = "SELECT * FROM User_Info WHERE StudentID = @0";
+    var username = "";
+    var name = "";
+    var email = "";
+    var College = "";
+    var Course = "";
+    var MobileNumber = "";
+    decimal CGPA = 0;
+    var HighSchool = "";
+    var MyAddress = "";
+    var Nickname = "";
+    var bvisual = 0;
+    var baural = 0;
+    var bverbal = 0;
+    var bphysical = 0;
+    var blogical = 0;
+    var bsocial = 0;
+    var bsolitary = 0;
+    if (Session["username"] == null)
+    {
+        Response.Redirect("default.cshtml");
+    }
+    else
+    {
+        username = (string)Session["username"];
+        var row = db.QuerySingle(selectQueryString, username);
+        name = (row.LastName + ", " + row.FirstName + " " + row.MiddleName);
+        email = row.Email;
+        var details = db.QuerySingle(GetProfileQuery, username);
+        if (details == null)
+        {
+            Response.Redirect("~Student/AddInfo");
+        }
+        else
+        {
+            College = details.College;
+            Course = details.Course;
+            MobileNumber = details.MobileNumber;
+            CGPA = details.CGPA;
+            HighSchool = details.HighSchool;
+            MyAddress = details.Address;
+            Nickname = details.Nickname;
+            if (row.Role == 1)
+            {
+                Response.Redirect("~");
+            }
+        }
+
+
+        var learningQuery = "SELECT * FROM Student_Learning WHERE StudentID = @0";
+
+        var learningresult = db.QuerySingle(learningQuery, username);
+
+        bvisual = learningresult.Visual;
+        baural = learningresult.Aural;
+        bverbal = learningresult.Verbal;
+        bphysical = learningresult.Physical;
+        blogical = learningresult.Logical;
+        bsocial = learningresult.Social;
+        bsolitary = learningresult.Solitary;
+
+
+
+
+        if (IsPost)
+        {
+            var visual = Request.Form["Visual"];
+            var aural = Request.Form["Aural"];
+            var verbal = Request.Form["Verbal"];
+            var physical = Request.Form["Physical"];
+            var logical = Request.Form["Logical"];
+            var social = Request.Form["Social"];
+            var solitary = Request.Form["Solitary"];
+
+            if (visual == "on")
+            {
+                bvisual = 1;
+            }
+            else { bvisual = 0; }
+            if (aural == "on")
+            {
+                baural = 1;
+            }
+            else { baural = 0; }
+            if (physical == "on")
+            {
+                bphysical = 1;
+            }
+            else { bphysical = 0; }
+            if (verbal == "on")
+            {
+                bverbal = 1;
+            }
+            else { bverbal = 0; }
+            if (logical == "on")
+            {
+                blogical = 1;
+            }
+            else { blogical = 0; }
+            if (social == "on")
+            {
+                bsocial = 1;
+            }
+            else { bsocial = 0; }
+            if (solitary == "on")
+            {
+                bsolitary = 1;
+            }
+            else { bsolitary = 0; }
+            var updateQueryString =
+           "UPDATE Student_Learning SET Visual=@0, Aural=@1, Verbal=@2, Physical=@3, Logical=@4, Social=@5, Solitary=@6 WHERE StudentId=@7";
+            db.Execute(updateQueryString, bvisual, baural, bverbal, bphysical, blogical, bsocial, bsolitary, username);
+
+
+        }
+    }
+
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Student Main Page</title>
+
+    <!-- Bootstrap -->
+    <link href="~/css/custombootstrap.css" rel="stylesheet">
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="~/js/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="~/js/bootstrap.js"></script>
+</head>
+<body>
+    <div class="navbar navbar-inverse">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">AcEs</a>
+
+            </div>
+            <p class="navbar-text navbar-right">Hi @name! <a href="~/Logout" class="navbar-link"><span class="glyphicon glyphicon-log-out"></span></a></p>
+        </div>
+    </div>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-3 well custom-leftmargin">
+                <ul class="nav nav-pills nav-stacked">
+                    <li><a href="~/Student">Home</a></li>
+                    <li><a href="~/Student/Edit/Info">Basic Information</a></li>
+                    <li><a href="~/Student/Edit/Password">Change Password</a></li>
+                    <li class="active"><a href="~/Student/Edit/Learning">Learning Style</a></li>
+                    <li><a href="~/Student/Edit/Grades">Add Grades</a></li>
+                </ul>
+            </div>
+            <div class="col-md-5 well custom-leftmargin">
+                <h3>Learning Style</h3>
+                <form method="post">
+                    <div class="form-group">
+                        <br>
+                        <input type="checkbox" name="Visual" checked="@(bvisual == 1)"> Visual (Spatial)<br>
+                        Visual learners use pictures, images, and spacial understanding. <br><br>
+                        <input type="checkbox" name="Aural" checked="@(baural == 1)"> Aural (Auditory-musical)<br>
+                        Aural learners use sounds and music. <br><br>
+                        <input type="checkbox" name="Verbal" checked="@(bverbal == 1)"> Verbal (Linguistic)<br>
+                        Verbal learners use words in both speech and writing. <br><br>
+                        <input type="checkbox" name="Physical" checked="@(bphysical == 1)"> Physical (Kinesthetic)<br>
+                        Physical learners use body, hands, and sense of touch. <br><br>
+                        <input type="checkbox" name="Logical" checked="@(blogical == 1)"> Logical (Mathematical)<br>
+                        Logical learners use logic, reasoning, and systems. <br><br>
+                        <input type="checkbox" name="Social" checked="@(bsocial == 1)"> Social (Interpersonal)<br>
+                        Social learners prefers learning with groups or other people. <br><br>
+                        <input type="checkbox" name="Soitary" checked="@(bsolitary == 1)"> Solitary (Intrapersonal)<br>
+                        Solitary learners prefers to work by himself and use self-study.
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+            </div>
+    </div>
+</body>
+</html>

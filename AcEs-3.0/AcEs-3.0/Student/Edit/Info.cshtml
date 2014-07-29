@@ -1,0 +1,154 @@
+﻿@{
+
+    var db = Database.Open("SQLServerConnectionString");
+    var selectQueryString = "SELECT * FROM [User] WHERE ID = @0";
+    var GetProfileQuery = "SELECT * FROM User_Info WHERE StudentID = @0";
+    var username = "";
+    var name = "";
+    var email = "";
+    var College = "";
+    var Course = "";
+    var MobileNumber = "";
+    decimal CGPA = 0;
+    var HighSchool = "";
+    var MyAddress = "";
+    var nickname = "";
+    if (Session["username"] == null)
+    {
+        Response.Redirect("default.cshtml");
+    }
+    else
+    {
+        username = (string)Session["username"];
+        var row = db.QuerySingle(selectQueryString, username);
+        name = (row.LastName + ", " + row.FirstName + " " + row.MiddleName);
+        email = row.Email;
+        var details = db.QuerySingle(GetProfileQuery, username);
+        if (details == null)
+        {
+            Response.Redirect("~Student/AddInfo");
+        }
+        else
+        {
+            College = details.College;
+            Course = details.Course;
+            MobileNumber = details.MobileNumber;
+            CGPA = details.CGPA;
+            HighSchool = details.HighSchool;
+            MyAddress = details.Address;
+            nickname = details.Nickname;
+            if (row.Role == 1)
+            {
+                Response.Redirect("../");
+            }
+        }
+    }
+
+    if (IsPost)
+    {
+        var updateQueryString =
+           "UPDATE User_Info SET College=@0, Course=@1, MobileNumber=@2, CGPA=@3, HighSchool=@4, Nickname=@5, Address=@6, Picture=@7 WHERE StudentId=@8";
+        nickname = Request["nickname"];
+        MobileNumber = Request["contact"];
+        MyAddress = Request["address"];
+        HighSchool = Request["HS"];
+        College = Request["College"];
+        Course = Request["Course"];
+        CGPA = Request["CGPA"].AsDecimal();
+
+        var fileSavePath = "";
+        var file = Request.Files["uploadfile"];
+        var fileName = Path.GetFileName(file.FileName);
+        fileSavePath = Server.MapPath("~/Picture/" +
+          fileName);
+        file.SaveAs(fileSavePath);
+        db.Execute(updateQueryString, College, Course, MobileNumber, CGPA, HighSchool, nickname, MyAddress, fileName, username);
+
+    }
+
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Student Edit Information</title>
+
+    <!-- Bootstrap -->
+    <link href="~/css/custombootstrap.css" rel="stylesheet"><!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="~/js/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="~/js/bootstrap.js"></script>
+    <script src="~/js/validate.js"></script>
+</head>
+<body>
+    <div class="navbar navbar-inverse">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">AcEs</a>
+
+            </div>
+            <p class="navbar-text navbar-right">Hi  @name! <a href="~/Logout" class="navbar-link"><span class="glyphicon glyphicon-log-out"></span></a></p>
+        </div>
+    </div>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-3 well custom-leftmargin">
+                <ul class="nav nav-pills nav-stacked">
+                    <li><a href="~/Student">Home</a></li>
+                    <li class="active"><a href="~/Student/Edit/Info">Basic Information</a></li>
+                    <li><a href="~/Student/Edit/Password">Change Password</a></li>
+                    <li><a href="~/Student/Edit/Learning">Learning Style</a></li>
+                    <li><a href="~/Student/Edit/Grades">Grades</a></li>
+                </ul>
+
+            </div>
+            <div class="col-md-5 well custom-leftmargin">
+                <h3>Personal Information</h3>
+                <form method="post">
+                    <div class="form-group">
+                        <label for="Picture">Upload Profile Picture</label>
+                        <input type="file" id="Picture" name="uploadfile">
+                    </div>
+                    <div class="form-group">
+                        <label for="Nickname">Nickname</label>
+                        <input type="text" class="form-control" id="Nickname" placeholder="Nickname" value="@nickname" name="nickname" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="College">College</label>
+                        <input type="text" class="form-control" id="College" placeholder="College" value="@College" name="College" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="Course">Course</label>
+                        <input type="text" class="form-control" id="Course" placeholder="Course" value="@Course" name="Course" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="Contact">Mobile Number</label>
+                        <input type="tel" class="form-control" id="Contact" placeholder="Contact Details" value="@MobileNumber" name="contact" onkeypress='validate(event)' required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="Address">Address</label>
+                        <input type="text" class="form-control" id="Address" placeholder="Address" value="@MyAddress" name="Address" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="HS">High School</label>
+                        <input type="text" class="form-control" id="HS" placeholder="High School" value="@HighSchool" name="HS" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="CGPA">CGPA</label>
+                        <input type="tel" class="form-control" id="CGPA" placeholder="CGPA" value="@CGPA" name="CGPA" onkeypress='validate(event)' required />
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,30 @@
+﻿@{if (IsPost)
+    {
+      var FirstName = Request["firstname"];
+      var MiddleName = Request["middlename"];
+      var LastName = Request["lastname"];
+      var idno = Request["idno"];
+      var email = Request["email"].ToString();
+      var password = Request["regpass"];
+      var db = Database.Open("SQLServerConnectionString");
+      var Insert = "INSERT INTO [User] (ID, Password, Email, FirstName, MiddleName, LastName, Role)" +
+            "VALUES (@0, @1, @2, @3, @4, @5, @6)";
+      var InsertLearning = "INSERT INTO Student_Learning (StudentId, Visual, Aural, Verbal, Physical, Logical, Social, Solitary)" +
+          "VALUES (@0, 0, 0, 0, 0, 0, 0, 0)";
+      
+       if(Request["button"].Equals("I am a teacher"))
+        {
+          db.Execute(Insert, idno, password, email, FirstName, MiddleName, LastName, 1);
+          Session["username"] = idno;
+          Response.Redirect("/Prof/Manage");
+        }
+      if(Request["button"].Equals("I am a student"))
+        {
+          db.Execute(Insert, idno, password, email, FirstName, MiddleName, LastName, 2);
+          db.Execute(InsertLearning, idno);
+          Session["username"] = idno;
+          Response.Redirect("/Student/AddInfo");
+          
+        }
+  }
+}

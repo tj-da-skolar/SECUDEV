@@ -1,0 +1,258 @@
+﻿@{
+
+    var db = Database.Open("SQLServerConnectionString");
+    var selectQueryString = "SELECT * FROM [User] WHERE ID = @0";
+    var GetProfileQuery = "SELECT * FROM User_Info WHERE StudentID = @0";
+    var username = "";
+    var name = "";
+    var email = "";
+    var College = "";
+    var Course = "";
+    var MobileNumber = "";
+    decimal CGPA = 0;
+    var HighSchool = "";
+    var MyAddress = "";
+    var Nickname = "";
+    var Year = "";
+    var Term = "";
+    var Sub1 = "";
+    var Sub2 = "";
+    var Sub3 = "";
+    var Sub4 = "";
+    var Sub5 = "";
+    var Sub6 = "";
+    decimal Grade1;
+    decimal Grade2;
+    decimal Grade3;
+    decimal Grade4;
+    decimal Grade5;
+    decimal Grade6;
+    var errormessage = "";
+    if (Session["username"] == null)
+    {
+        Response.Redirect("default.cshtml");
+    }
+    else
+    {
+        username = (string)Session["username"];
+        var row = db.QuerySingle(selectQueryString, username);
+        name = (row.LastName + ", " + row.FirstName + " " + row.MiddleName);
+        email = row.Email;
+        var details = db.QuerySingle(GetProfileQuery, username);
+        if (details == null)
+        {
+            Response.Redirect("~Student/AddInfo");
+        }
+        else
+        {
+            College = details.College;
+            Course = details.Course;
+            MobileNumber = details.MobileNumber;
+            CGPA = details.CGPA;
+            HighSchool = details.HighSchool;
+            MyAddress = details.Address;
+            Nickname = details.Nickname;
+            if (row.Role == 1)
+            {
+                Response.Redirect("../");
+            }
+        }
+    }
+    
+    if(IsPost)
+    {
+        var AddGrade = "INSERT INTO Grades (StudentID, CourseCode, Term, Grade, Year)" +
+            "VALUES (@0, @1, @2, @3, @4)";
+        Year = Request["Year"].ToString();
+        Term = Request["Term"].ToString();
+        Sub1 = Request["courseCode1"];
+        Grade1 = Request["grade1"].AsDecimal();
+
+        Sub2 = Request["courseCode2"];
+        Grade2 = Request["grade2"].AsDecimal();
+
+
+        Sub3 = Request["courseCode3"];
+        Grade3 = Request["grade3"].AsDecimal();
+
+
+        Sub4 = Request["courseCode4"];
+        Grade4 = Request["grade4"].AsDecimal();
+
+
+        Sub5 = Request["courseCode5"];
+        Grade5 = Request["grade5"].AsDecimal();
+
+
+        Sub6 = Request["courseCode6"];
+        Grade6 = Request["grade6"].AsDecimal();
+
+        db.Execute(AddGrade, username, Sub1, Term, Grade1, Year);
+        errormessage += Sub1;
+
+        if (Sub2 != null && Grade2 != "0.0".AsDecimal())
+        {
+            if(errormessage != "")
+            {
+                errormessage += ", ";
+            }
+            db.Execute(AddGrade, username, Sub2, Term, Grade2, Year);
+            errormessage += Sub2;
+        }
+        if (Sub3 != null && Grade3 != "0.0".AsDecimal())
+        {
+            if (errormessage != "")
+            {
+                errormessage += ", ";
+            }
+            db.Execute(AddGrade, username, Sub3, Term, Grade3, Year);
+            errormessage += Sub3;
+        }
+        if (Sub4 != null && Grade4 != "0.0".AsDecimal())
+        {
+            if (errormessage != "")
+            {
+                errormessage += ", ";
+            }
+
+            db.Execute(AddGrade, username, Sub4, Term, Grade4, Year);
+            errormessage += Sub4;
+        }
+        if (Sub5 != null && Grade5 != "0.0".AsDecimal())
+        {
+            if (errormessage != "")
+            {
+                errormessage += ", ";
+            }
+            db.Execute(AddGrade, username, Sub5, Term, Grade5, Year);
+            errormessage += Sub5;
+        }
+        if (Sub6 != null && Grade6 != "0.0".AsDecimal())
+        {
+            if (errormessage != "")
+            {
+                errormessage += ", ";
+            }
+            db.Execute(AddGrade, username, Sub6, Term, Grade6, Year);
+            errormessage += Sub6;
+        }
+
+        if (errormessage != "")
+        {
+            errormessage += " has been added successfully!";
+        }
+    }
+
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Student Main Page</title>
+
+    <!-- Bootstrap -->
+    <link href="~/css/custombootstrap.css" rel="stylesheet">
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="~/js/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="~/js/bootstrap.js"></script>
+</head>
+<body>
+    <div class="navbar navbar-inverse">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">AcEs</a>
+
+            </div>
+            <p class="navbar-text navbar-right">Hi @name! <a href="~/Logout" class="navbar-link"><span class="glyphicon glyphicon-log-out"></span></a></p>
+        </div>
+    </div>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-3 well custom-leftmargin">
+                <ul class="nav nav-pills nav-stacked">
+                    <li><a href="~/Student">Home</a></li>
+                    <li><a href="~/Student/Edit/Info">Basic Information</a></li>
+                    <li><a href="~/Student/Edit/Password">Change Password</a></li>
+                    <li><a href="~/Student/Edit/Learning">Learning Style</a></li>
+                    <li class="active"><a href="~/Student/Edit/Grades">Add Grades</a></li>
+                </ul>
+            </div>
+            <div class="col-md-7 well custom-leftmargin">
+                <h3>Add Grades</h3><br>
+                @if (IsPost)
+                {
+                    <div class="alert alert-success alert-dismissable">
+                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                        <strong>@errormessage<a href="~/Student">Click here to view your grades</a>.</strong>
+                    </div>
+                }
+                <form method="post">
+                    <div id="gradesRow">
+                        <div style="margin-left:15px;">
+                            <div class="row">
+                                <div class="col-md-1"><label for="AY">A.Y.</label></div>
+                                <div class="col-m-6">
+                                    <select style="width:20%;" name="Year">
+                                        <option value="blank"></option>
+                                        <option value="2011-12">2011-12</option>
+                                        <option value="2012-13">2012-13</option>
+                                        <option value="2013-14">2013-14</option>
+                                    </select>
+                                    <br>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-1"><label for="Term">Term</label></div>
+                                <div class="col-m-6">
+                                    <select style="width:20%;" name="Term">
+                                        <option value="blank"></option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                    </select>
+                                    <br>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr />
+                        <div class="col-md-5">
+                            <div class="form-group">
+                                <label for="Course Code">Course Code</label>
+                                <input type="text" class="form-control" id="courseCode1" placeholder="Course Code" name="courseCode1" required>
+                                <input type="text" class="form-control" id="courseCode2" placeholder="Course Code" name="courseCode2">
+                                <input type="text" class="form-control" id="courseCode3" placeholder="Course Code" name="courseCode3">
+                                <input type="text" class="form-control" id="courseCode4" placeholder="Course Code" name="courseCode4">
+                                <input type="text" class="form-control" id="courseCode5" placeholder="Course Code" name="courseCode5">
+                                <input type="text" class="form-control" id="courseCode6" placeholder="Course Code" name="courseCode6">
+                            </div>
+                        </div>
+
+                        <div class="col-md-5">
+                            <div class="form-group">
+                                <label for="Grade">Grade</label>
+                                <input type="text" class="form-control" id="grade1" placeholder="Grade" name="grade1" required>
+                                <input type="text" class="form-control" id="grade2" placeholder="Grade" name="grade2">
+                                <input type="text" class="form-control" id="grade3" placeholder="Grade" name="grade3">
+                                <input type="text" class="form-control" id="grade4" placeholder="Grade" name="grade4">
+                                <input type="text" class="form-control" id="grade5" placeholder="Grade" name="grade5">
+                                <input type="text" class="form-control" id="grade6" placeholder="Grade" name="grade6">
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-primary">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            </div>
+        </div>
+
+</body>
+</html>
